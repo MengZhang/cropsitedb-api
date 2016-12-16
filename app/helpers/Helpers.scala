@@ -2,6 +2,7 @@ package cropsitedb.helpers
 
 import anorm.{NamedParameter, SeqParameter}
 import java.text.SimpleDateFormat
+import java.text.ParseException
 import java.nio.file.{Path,FileSystems}
 import scala.collection.mutable.Buffer
 
@@ -11,6 +12,8 @@ import play.api.libs.functional.syntax._
 
 object AnormHelper {
   val df = new SimpleDateFormat("yyyyMMdd")
+  val df2 = new SimpleDateFormat("yyyy-MM-dd")
+  val df3 = new SimpleDateFormat("M-dd-yy")
 
   def varJoin(x: List[(String,_)]):String = {
     x.foldLeft(""){ (a,n) => a + "," + n._1 }.drop(1)
@@ -22,18 +25,40 @@ object AnormHelper {
 
   def agmipToNamedParam(x: (String,String)):NamedParameter = {
     x._1 match {
-      case d1 if d1.endsWith("date") => new NamedParameter(d1, Some(df.parse(x._2)))
-      case d2 if d2.endsWith("dat")  => new NamedParameter(d2, Some(df.parse(x._2)))
+      case d1 if d1.endsWith("date") => new NamedParameter(d1,failoverDateHandler(x._2))
+      case d2 if d2.endsWith("dat")  => new NamedParameter(d2, failoverDateHandler(x._2))
       case s => new NamedParameter(s, Some(x._2))
     }
   }
 
   def dynQueryToNamedParam(x: (String,Seq[String])):NamedParameter = {
     x._1 match {
-      case d1 if d1.endsWith("date") => new NamedParameter(d1, SeqParameter(x._2.map{ z => Some(df.parse(z))}))
-      case d2 if d2.endsWith("dat")  => new NamedParameter(d2, SeqParameter(x._2.map{ z => Some(df.parse(z))}))
+      case d1 if d1.endsWith("date") => new NamedParameter(d1, SeqParameter(x._2.map{ z => failoverDateHandler(z)}))
+      case d2 if d2.endsWith("dat")  => new NamedParameter(d2, SeqParameter(x._2.map{ z => failoverDateHandler(z)}))
       case cr if cr == "crid"        => new NamedParameter(cr, x._2.toSeq.map(v => Some(v.toUpperCase)))
       case s => new NamedParameter(s, x._2.toSeq.map(Some(_)))
+    }
+  }
+
+  def failoverDateHandler(d: String): Option[java.util.Date] = {
+    try {
+      Some(df.parse(d))
+    } catch {
+      case f1: ParseException => {
+        try {
+          Some(df2.parse(d))
+        } catch {
+          case f2: ParseException => {
+            try {
+              Some(df3.parse(d))
+            } catch {
+              case _: Throwable => { None }
+            }
+          }
+          case _: Throwable => { None }
+        }
+      }
+      case _: Throwable => { None }
     }
   }
 
@@ -68,20 +93,16 @@ object DatasetHelper {
 // TODO: Needs support for Galaxy extensions (GALAXY_URL and TOOL_ID)
 object DownloadHelper {
   case class DownloadRequest(email: Option[String], galaxyUrl: Option[String], toolId: Option[String], fileTypes: Int, downloads: Seq[DSIDRequest])
-  case class DSIDRequest(dsid: String, eids: Seq[String])
+  case class DSIDRequest(dsid: String, eids: Option[Seq[String]])
 
   implicit val DSIDRequestReads = Json.reads[DSIDRequest]
-  /* implicit val DSIDRequestReads: Reads[DSIDRequest] = (
-   (JsPath \ "dsid").read[String] and
-   (JsPath \ "eids").lazyRead(Reads.seq[String])
-   )(DSIDRequest.apply _) */
 
   implicit val DownloadRequestReads: Reads[DownloadRequest] = (
     (JsPath \ "email").readNullable[String] and
       (JsPath \ "galaxy_url").readNullable[String] and
       (JsPath \ "tool_id").readNullable[String] and
       (JsPath \ "type").read[Int] and
-      (JsPath \ "downloads").read[Seq[DSIDRequest]]//lazyRead(Reads.seq[DSIDRequest])
+      (JsPath \ "downloads").read[Seq[DSIDRequest]]
   )(DownloadRequest.apply _)
 }
 

@@ -2,27 +2,28 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-OPTIONS /                                 cropsitedb.controllers.Application.rootOptions
-OPTIONS /*url                             cropsitedb.controllers.Application.options(url: String)
-GET     /                                 cropsitedb.controllers.Application.index
-POST    /cropsitedb/2/query/geohash       cropsitedb.controllers.Application.geohashQuery
-POST     /cropsitedb/2/query/bulk          cropsitedb.controllers.MetadataController.dumpMetadata
-GET     /cropsitedb/2/query               cropsitedb.controllers.Application.query
-POST    /cropsitedb/2/query               cropsitedb.controllers.Application.query
-POST    /cropsitedb/2/download            cropsitedb.controllers.DownloadController.download
-GET     /cropsitedb/2/download/:id        cropsitedb.controllers.DownloadController.serve(id: String)
-GET     /cropsitedb/2/cache/crop          cropsitedb.controllers.Application.cropCache
-GET     /cropsitedb/2/cache/location      cropsitedb.controllers.Application.locationCache
+OPTIONS /                                   cropsitedb.controllers.Application.rootOptions
+OPTIONS /*url                               cropsitedb.controllers.Application.options(url: String)
+GET     /                                   cropsitedb.controllers.Application.index
+POST    /cropsitedb/2/query/geohash         cropsitedb.controllers.Application.geohashQuery
+POST    /cropsitedb/2/query/bulk            cropsitedb.controllers.MetadataController.dumpMetadata
+GET     /cropsitedb/2/query                 cropsitedb.controllers.Application.query
+POST    /cropsitedb/2/query                 cropsitedb.controllers.Application.query
+POST    /cropsitedb/2/download              cropsitedb.controllers.DownloadController.download
+GET     /cropsitedb/2/download/:id          cropsitedb.controllers.DownloadController.serve(id: String)
+GET     /cropsitedb/2/cache/crop            cropsitedb.controllers.Application.cropCache
+GET     /cropsitedb/2/cache/location        cropsitedb.controllers.Application.locationCache
 
 # New Dataset procedure
 POST    /cropsitedb/2/dataset/create        cropsitedb.controllers.DatasetController.createDataset
 POST    /cropsitedb/2/dataset/:id/add       cropsitedb.controllers.DatasetController.addToDataset(id: String)
 POST    /cropsitedb/2/dataset/:id/delete    cropsitedb.controllers.DatasetController.deleteFromDataset(id: String)
-POST	/cropsitedb/2/dataset/:id/finalize  cropsitedb.controllers.DatasetController.finalizeDataset(id: String)
+POST    /cropsitedb/2/dataset/:id/finalize  cropsitedb.controllers.DatasetController.finalizeDataset(id: String)
 DELETE  /cropsitedb/2/dataset               cropsitedb.controllers.DatasetController.deleteDataset
+GET     /cropsitedb/2/dataset/:id           cropsitedb.controllers.DownloadController.serveDataset(id: String)
 
 # External Data Intergration
-GET    /cropsitedb/2/extern/agtrials        cropsitedb.controllers.ExternalDataController.agtrials
+GET     /cropsitedb/2/extern/agtrials       cropsitedb.controllers.ExternalDataController.agtrials
 
 # Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file                     controllers.Assets.at(path="/public", file)
+GET     /assets/*file                       controllers.Assets.at(path="/public", file)

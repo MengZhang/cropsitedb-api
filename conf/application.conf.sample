@@ -69,5 +69,3 @@ logger.application=INFO
 navi.baseurl="http://localhost:8082"
 extern.agtrials.url = ""
 datastore.local.directory = "/some/directory/writable/by/user"
-
-ws.acceptAllCertificates=true

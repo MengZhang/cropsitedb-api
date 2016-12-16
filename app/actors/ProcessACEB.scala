@@ -1,6 +1,6 @@
 package cropsitedb.actors
 
-import akka.actor.{Actor, Props}
+import akka.actor.{Actor, Props, ActorLogging}
 import akka.event.Logging
 
 import play.api.db.DB
@@ -14,7 +14,7 @@ import scala.util.{Success, Failure}
 
 import java.io.File
 
-import org.agmip.ace.{AceDataset, AceExperiment}
+import org.agmip.ace.{AceDataset, AceExperiment, AceObservedData}
 import org.agmip.ace.io.AceParser
 import org.agmip.ace.util._
 
@@ -22,7 +22,7 @@ import scala.collection.JavaConversions._
 
 import play.api.Play.current
 
-class ProcessACEB extends Actor {
+class ProcessACEB extends Actor with ActorLogging {
   def receive = {
     case msg: Messages.ProcessFile =>
       processing(msg)
@@ -32,7 +32,6 @@ class ProcessACEB extends Actor {
     val naviUrl = CropsiteDBConfig.naviUrl
     val acebFile = new File(msg.filePath)
     if(acebFile.canRead) {
-      println(s"Importing "+msg.filePath+" file")
       val dataset = AceParser.parseACEB(acebFile)
       dataset.linkDataset
       val metadata = MetadataFilter.INSTANCE.getMetadata.toList
@@ -74,9 +73,15 @@ class ProcessACEB extends Actor {
 
   private def extractAndPost(experiments: List[AceExperiment], metadata: List[String], dsid: String) = {
     val extracted = experiments.map(ex => {
-      extractMetadata(ex, metadata, List(("api_source", "AgMIP"), ("dsid", dsid), ("fl_geohash", ex.getValueOr("~fl_geohash~", ""))))
+      val observed = extractObservedVars(ex).mkString(" ")
+      val obsEndSeasonCount = ex.getObservedData().keySet().size.toString
+      val obsTimeseriesCount = ex.getObservedData().getTimeseries().size.toString
+      extractMetadata(ex, metadata, List(("api_source", "AgMIP"),
+        ("dsid", dsid), ("fl_geohash", ex.getValueOr("~fl_geohash~", "")),
+        ("obs_end_of_season", obsEndSeasonCount), ("obs_time_series_data", obsTimeseriesCount),
+        ("obs_vars", observed)
+          ))
     }).iterator
-    println("Preparing to write ACEB Metadata to database")
     DB.withTransaction { implicit c =>
       extracted.foreach { ex =>
         SQL("INSERT INTO ace_metadata ("+AnormHelper.varJoin(ex)+") VALUES ("+AnormHelper.valJoin(ex)+")").on(ex.map(AnormHelper.agmipToNamedParam(_)):_*).execute()
@@ -84,19 +89,44 @@ class ProcessACEB extends Actor {
     }
   }
 
+  private def extractObservedVars(experiment: AceExperiment) : List[String] = {
+    def daily(o: AceObservedData): List[String] = {
+      o.getTimeseries().map { ts => ts.keySet() }.toList.flatten
+    }
+    (experiment.getObservedData().keySet().toList ::: daily(experiment.getObservedData())).distinct
+  }
 
   @scala.annotation.tailrec
   private def extractMetadata(experiment: AceExperiment, metadata: List[String], collected: List[Tuple2[String,String]]):List[Tuple2[String,String]] = {
-    val md = metadata.headOption
-    if(md.isDefined) {
-      val mdx = Option(AceFunctions.deepGetValue(experiment, md.get))
-      if (mdx.isDefined) {
-        extractMetadata(experiment, metadata.tail, Tuple2(md.get, if (md.get == "crid") mdx.get.toUpperCase else mdx.get) :: collected)
-      } else {
-        extractMetadata(experiment, metadata.tail, collected)
+    metadata.headOption match {
+      case None => collected
+      case Some(lookup) => {
+        val found = lookup match {
+          case "fertilizer" => {
+            Option(AceFunctions.deepGetValue(experiment, "fecd")) match {
+              case None => Some("N")
+              case Some(_) => Some("Y")
+            }
+          }
+          case "irrig" => {
+            Option(AceFunctions.deepGetValue(experiment, "irop")) match {
+              case None => Some("N")
+              case Some(_) => Some("Y")
+            }
+          }
+          case l => Option(AceFunctions.deepGetValue(experiment, l))
+        }
+        found match {
+          case None => extractMetadata(experiment, metadata.tail, collected)
+          case Some(value) => {
+            val collect = Tuple2(lookup, lookup match {
+              case "crid" => value.toUpperCase
+              case _ => value
+            })
+            extractMetadata(experiment, metadata.tail, collect :: collected)
+          }
+        }
       }
-    } else {
-      collected
     }
   }
 }

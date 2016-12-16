@@ -37,6 +37,12 @@ class ProcessACMO extends Actor with ActorLogging {
     var h:List[String] = List()
     var acc:List[List[Tuple2[String,String]]] = List()
 
+    val filecmss = f.getName().split("-").reverse.drop(1).take(1).apply(0)
+    val cmss = filecmss.take(2) match {
+      case "CM" => filecmss
+      case _ => ""
+    }
+
     while (Option(l).isDefined) {
       val line = l.toList
       line.head match {
@@ -51,7 +57,7 @@ class ProcessACMO extends Actor with ActorLogging {
 
     DB.withTransaction { implicit c =>
       acc.foreach { merged =>
-        val entry = ("dataset_id", dsid) :: merged
+        val entry = ("dataset_id", dsid) :: ("cmss", cmss) :: merged
         SQL("INSERT INTO acmo_metadata ("+AnormHelper.varJoin(entry)+") VALUES ("+AnormHelper.valJoin(entry)+")").on(entry.map(AnormHelper.agmipToNamedParam(_)):_*).execute()
       }
     }

@@ -22,3 +22,4 @@ uploads
 conf/application.conf
 *.swp
 .DS_Store
+*.#*

@@ -35,7 +35,7 @@ object MetadataController extends Controller {
               val site = siteRow[String]("site")
               val collabMode = siteRow[Option[Int]]("bulk_loading") match {
                 case None => false
-                case Some(x) => x match { 
+                case Some(x) => x match {
                   case 0 => false
                   case _ => true
                 }

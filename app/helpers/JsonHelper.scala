@@ -33,17 +33,18 @@ object JsonHelper {
     val v = e.map(r => r.asMap).map { lvl1 => lvl1.map {
       case (k,v) => {
         val nk = k.drop(13)
-        val nv:Option[String] = v match {
-          case Some(d1:Date) if nk.endsWith("date") => Some(AnormHelper.df.format(d1))
-          case Some(d2:Date) if nk.endsWith("dat")  => Some(AnormHelper.df.format(d2))
-          case Some(s:String)  => Some(s)
+        val nv:Option[JsValue] = v match {
+          case Some(d1:Date) if nk.endsWith("date") => Some(JsString(AnormHelper.df.format(d1)))
+          case Some(d2:Date) if nk.endsWith("dat")  => Some(JsString(AnormHelper.df.format(d2)))
+          case Some(s:String) if (nk == "obs_vars") => Some(JsArray(s.split(" ").map(z => JsString(z))))
+          case Some(s:String) => Some(JsString(s))
           case None     => None
           case _        => None
         }
         (nk,nv)
       }
     }}
-    val x = v.map { z => z.collect {case (k, Some(v)) => (k,v) } }
+    val x = v.map { z => z.collect { case (k, Some(v)) => (k, v) }}
     Json.toJson(x.toList)
   }
 }

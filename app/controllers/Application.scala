@@ -68,8 +68,8 @@ object Application extends Controller {
       qReq => {
         DB.withConnection { implicit c =>
           val e = qReq.crid match {
-            case Some(cr:String) => SQL("SELECT * FROM ace_metadata WHERE fl_geohash IN ({geohashes}) AND crid={crid} ORDER BY (dsid,crid,exname)").on('geohashes -> qReq.locations, 'crid -> cr).apply
-            case _       => SQL("SELECT * FROM ace_metadata WHERE fl_geohash IN ({geohashes}) ORDER BY (dsid,crid,exname)").on('geohashes -> qReq.locations).apply
+            case Some(cr:String) => SQL("SELECT * FROM ace_metadata WHERE fl_geohash IN ({geohashes}) AND crid={crid} ORDER BY dsid,crid,exname").on('geohashes -> qReq.locations, 'crid -> cr).apply
+            case _       => SQL("SELECT * FROM ace_metadata WHERE fl_geohash IN ({geohashes}) ORDER BY dsid,crid,exname").on('geohashes -> qReq.locations).apply
           }
           Ok(JsonHelper.structureQueryOutput(e))
         }
