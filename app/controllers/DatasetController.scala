@@ -35,7 +35,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.Logger
 
 import com.google.common.io.{Files => GFiles}
-import org.agmip.tools.{Seamer, AgmipFileIdentifier}
+import cropsitedb.helpers.{Seamer, AgmipFileIdentifier}
 
 object DatasetController extends Controller {
   val baseDir = CropsiteDBConfig.localFileStore

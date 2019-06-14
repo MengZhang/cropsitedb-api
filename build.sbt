@@ -18,8 +18,7 @@ libraryDependencies ++= Seq(
   "org.agmip.ace"    % "ace-core"            % "2.1.0",
   "org.apache.tika"  % "tika-core"           % "1.6",
   "org.agmip"        % "dome"                % "1.4.12",
-  "org.agmip"        % "acmo"                % "1.1.8",
-  "org.agmip.tools"  %% "data-seam"          % "0.1.0"
+  "org.agmip"        % "acmo"                % "1.1.8"
 )
 
 doc in Compile <<= target.map(_ / "none")

@@ -10,7 +10,7 @@ import java.nio.file.attribute.BasicFileAttributes
 import org.agmip.ace.{AceDataset,AceExperiment}
 import org.agmip.ace.io.AceParser
 import org.agmip.ace.util._
-import org.agmip.tools.AgmipFileIdentifier
+import cropsitedb.helpers.AgmipFileIdentifier
 import scala.collection.JavaConversions._
 
 import play.core.StaticApplication
