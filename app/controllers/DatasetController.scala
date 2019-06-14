@@ -62,7 +62,7 @@ object DatasetController extends Controller {
         DB.withTransaction { implicit c =>
           SQL("INSERT INTO ace_datasets(dsid, title, email, frozen) VALUES ({d}, {t}, {e}, {f})").on("d"->dsid, "t"->dscReq.title, "e"->dscReq.email.toLowerCase, "f"->dscReq.freeze.getOrElse(false)).execute()
         }
-        Ok(Json.obj("dsid"->dsid, "title"->dscReq.title))
+        Ok(Json.obj("dsid"->dsid, "title"->dscReq.title, "dest"->destDir.toString))
       }
       )
   }
