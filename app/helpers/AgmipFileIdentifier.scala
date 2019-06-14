@@ -71,19 +71,24 @@ object AgmipFileIdentifier {
   }
 
   def textFileType(f: File):String = {
-    val file = Source.fromFile(f).getLines
-    file.foreach { l =>
-      l.take(1) match {
-        case "!" | "*" => {}
-        case "#" => {
-          l.contains("CROP_MODEL") match {
-            case true => return "ACMO"
-            case false => return "ALINK"
+    val file = Source.fromFile(f)
+    try {
+      val lines = file.getLines
+      lines.foreach { l =>
+        l.take(1) match {
+          case "!" | "*" => {}
+          case "#" => {
+            l.contains("CROP_MODEL") match {
+              case true => return "ACMO"
+              case false => return "ALINK"
+            }
           }
+          case _ => return "Supplemental"
         }
-        case _ => return "Supplemental"
       }
+      "Supplemental"
+    } finally {
+      file.close
     }
-    "Supplemental"
   }
 }
