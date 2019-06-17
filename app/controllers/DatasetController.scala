@@ -78,7 +78,12 @@ object DatasetController extends Controller {
         SQL("SELECT * FROM ace_datasets WHERE dsid={d}").on("d"->dsid).apply()
           .map { r =>
             val p = dsPath(r[String]("dsid"), Option(r[Boolean]("frozen")))
-            val dest = p.resolve(fileName)
+            var dest = p.resolve(fileName)
+            if (fileName.toLowerCase().endsWith("aceb")) {
+              dest = p.resolve("ACE_dataset.aceb")
+            } else if (fileName.toLowerCase().endsWith("dome")) {
+              dest = p.resolve("alldomes.dome")
+            }
             try {
               Files.move(f.ref.file.toPath, dest)
             } catch {
