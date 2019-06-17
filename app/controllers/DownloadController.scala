@@ -99,7 +99,7 @@ object DownloadController extends Controller {
             makeMetadataFile(destPath, dataset.dsid, dataset.eids)
           }
         }
-        val destUrl = routes.DownloadController.serve(dlReqId).absoluteURL(true)
+        val destUrl = routes.DownloadController.serve(dlReqId).absoluteURL(false)
         Future { Ok(Json.obj("url" -> destUrl)) }
       })
   }
